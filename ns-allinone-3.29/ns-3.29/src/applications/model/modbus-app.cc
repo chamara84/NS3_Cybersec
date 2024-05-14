@@ -478,6 +478,7 @@ static int modifyData(modbus_config_t *config, modbus_session_data_t *session,ui
 	uint8_t mask = 0;
 	uint8_t n =0;
 	uint8_t p=0;
+	 uint16_t data = 0;
 
 	header = (modbus_header_t *) pdu_start;
 	if(header->transaction_id!=(session->request_data).transactionID)
@@ -574,9 +575,11 @@ static int modifyData(modbus_config_t *config, modbus_session_data_t *session,ui
 						case MODBUS_FUNC_WRITE_SINGLE_REGISTER:
 							memcpy(&n,(pdu_start+MODBUS_MIN_LEN),2); //copy the index
 											 n = ntohs(n);
+											 memcpy(&data,(pdu_start+MODBUS_MIN_LEN+2),2); //copy the data
+											 printf("In WriteRegisters id=%d value=%d\n",n,data);
 											 if(n==(config->values_to_alter[index]).identifier)
 													{
-												 uint16_t data = 0;
+
 
 												 memcpy(&data,(pdu_start+MODBUS_MIN_LEN+2),2); //copy the data
 
@@ -637,7 +640,7 @@ static int modifyWriteData(modbus_config_t *config, modbus_session_data_t *sessi
 	uint16_t bit_cnt = 0, byte_cnt = 0;
 	header = (modbus_header_t *) pdu_start;
 	uint16_t zeros[8] = {0,0,0,0,0,0,0,0};
-
+	uint16_t data = 0;
 	if(header->transaction_id!=(session->request_data).transactionID)
 		{
 			printf("Transaction is missed\n");
@@ -648,7 +651,9 @@ static int modifyWriteData(modbus_config_t *config, modbus_session_data_t *sessi
 
 	for(int index = 0 ; index<config->numAlteredVal;index++)
 	{
-		if((config->values_to_alter[index]).type == header->function_code && ((config->values_to_alter[index]).identifier)>=start && ((config->values_to_alter[index]).identifier)<=stop )
+
+
+		if((config->values_to_alter[index]).type == header->function_code)
 		{
 			uint16_t byteNumber;
 			switch(header->function_code)
@@ -678,6 +683,7 @@ static int modifyWriteData(modbus_config_t *config, modbus_session_data_t *sessi
 					 {
 						 temp = 0x00FF;
 					 }
+
 					 memcpy(pdu_start+MODBUS_MIN_LEN+2,&(temp),2);
 					 modified = 1;
 					 printf("Modify WriteCoils id=%d value=%d\n",(config->values_to_alter[index]).identifier,temp );
@@ -688,11 +694,15 @@ static int modifyWriteData(modbus_config_t *config, modbus_session_data_t *sessi
 			case MODBUS_FUNC_WRITE_SINGLE_REGISTER:
 				memcpy(&n,(pdu_start+MODBUS_MIN_LEN),2); //copy the index
 								 n = ntohs(n);
+
+
+								 memcpy(&data,(pdu_start+MODBUS_MIN_LEN+2),2); //copy the data
+								 printf("In WriteHoldReg id=%d value=%d\n",n,data );
 								 if(n==(config->values_to_alter[index]).identifier)
 										{
-									 uint16_t data = 0;
+									 //uint16_t data = 0;
 
-									 memcpy(&data,(pdu_start+MODBUS_MIN_LEN+2),2); //copy the data
+									// memcpy(&data,(pdu_start+MODBUS_MIN_LEN+2),2); //copy the data
 									 (config->values_to_alter[index]).old_value = ntohs(data);
 										 temp = htons((config->values_to_alter[index]).integer_value);
 
