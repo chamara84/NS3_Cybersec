@@ -156,12 +156,12 @@ static void ModbusCheckRequestLengths(modbus_session_data_t *session, uint8_t *p
         	        	(session->request_data).quantity = ntohs((session->request_data).quantity);
         	        	if (modbus_payload_len == MODBUS_FOUR_DATA_BYTES)
         	        	                check_passed = 1;
-        	        	            break;
-        	        	break;
+        	        	  break;
+
         case MODBUS_FUNC_WRITE_SINGLE_COIL:
         case MODBUS_FUNC_WRITE_SINGLE_REGISTER:
         case MODBUS_FUNC_DIAGNOSTICS:
-            if (modbus_payload_len == MODBUS_FOUR_DATA_BYTES)
+            if (modbus_payload_len >= MODBUS_FOUR_DATA_BYTES)
                 check_passed = 1;
             break;
 
@@ -288,7 +288,7 @@ static void ModbusCheckRequestLengths(modbus_session_data_t *session, uint8_t *p
 
     if (!check_passed)
     {
-    	printf("Bad legth: %s \n",MODBUS_BAD_LENGTH_STR);
+    	printf("Bad Request length: %s \n",MODBUS_BAD_LENGTH_STR);
 
     }
 }
@@ -329,7 +329,8 @@ static void ModbusCheckResponseLengths(modbus_session_data_t *session, uint8_t *
         case MODBUS_FUNC_GET_COMM_EVENT_COUNTER:
         case MODBUS_FUNC_WRITE_MULTIPLE_COILS:
         case MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS:
-            if (modbus_payload_len >=MODBUS_WRITE_MULTIPLE_MIN_SIZE )
+        	tmp_count = *(pdu_start + MODBUS_MIN_LEN);
+        	if (modbus_payload_len >= MODBUS_BYTE_COUNT_SIZE )
                 check_passed = 1;
             break;
 
@@ -419,7 +420,7 @@ static void ModbusCheckResponseLengths(modbus_session_data_t *session, uint8_t *
 
     if (!check_passed)
     {
-    	printf("Bad length:%s \n",MODBUS_BAD_LENGTH_STR);
+    	printf("Bad Responce length:%s \n",MODBUS_BAD_LENGTH_STR);
 
     }
 }
@@ -670,12 +671,12 @@ static int modifyWriteData(modbus_config_t *config, modbus_session_data_t *sessi
 					 (config->values_to_alter[index]).old_value = ntohs(data);
 					 if((config->values_to_alter[index]).integer_value == 0)
 					 {
-						 temp = 0;
+						 temp = 0x0000;
 
 					 }
 					 else
 					 {
-						 temp = 0xFF00;
+						 temp = 0x00FF;
 					 }
 					 memcpy(pdu_start+MODBUS_MIN_LEN+2,&(temp),2);
 					 modified = 1;
@@ -698,7 +699,7 @@ static int modifyWriteData(modbus_config_t *config, modbus_session_data_t *sessi
 
 									 memcpy(pdu_start+MODBUS_MIN_LEN+2,&(temp),2);
 									 modified = 1;
-									 printf("Modify WriteCoils id=%d value=%d\n",(config->values_to_alter[index]).identifier,temp );
+									 printf("Modify WriteHoldReg id=%d value=%d\n",(config->values_to_alter[index]).identifier,temp );
 										}
 
 
